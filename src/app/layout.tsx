@@ -1,10 +1,10 @@
 import type { Metadata } from 'next';
-import { GeistSans } from 'next/font/google'; // Updated import
+import { GeistSans } from 'geist/font/sans'; // Corrected import for GeistSans
 import './globals.css';
 import { Toaster } from '@/components/ui/toaster';
 import { ThemeProvider } from '@/components/layout/ThemeProvider';
 
-const geistSans = GeistSans({ // Updated usage
+const geistSans = GeistSans({
   variable: '--font-geist-sans',
   subsets: ['latin'],
 });
@@ -21,7 +21,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className={`${geistSans.variable} antialiased`}>
+      <body className={`${geistSans.variable} font-sans antialiased`}> {/* Added font-sans as a fallback */}
         <ThemeProvider
           attribute="class"
           defaultTheme="system"
