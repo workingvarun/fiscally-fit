@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { PlusCircle, Edit3, Trash2, ShoppingCart, Car, Zap, Home, Film, HeartPulse, BookOpen, Sparkles, AlertTriangle, type LucideIcon, X } from "lucide-react";
+import { PlusCircle, Edit3, Trash2, ShoppingCart, Car, Zap, Home, Film, HeartPulse, BookOpen, Sparkles, AlertTriangle, type LucideIcon, X, Tags } from "lucide-react";
 import type { Category } from "@/lib/definitions";
 import { AVAILABLE_CATEGORY_ICONS, DEFAULT_CATEGORIES } from '@/lib/constants';
 import { useToast } from '@/hooks/use-toast';
@@ -16,7 +16,7 @@ import { Badge } from '@/components/ui/badge';
 import * as LucideIcons from 'lucide-react';
 
 const iconMap: { [key: string]: LucideIcon } = {
-  ShoppingCart, Car, Zap, Home, Film, HeartPulse, BookOpen, Sparkles, AlertTriangle,
+  ShoppingCart, Car, Zap, Home, Film, HeartPulse, BookOpen, Sparkles, AlertTriangle, Tags,
   ...LucideIcons, // Add all lucide icons
 };
 
