@@ -221,7 +221,7 @@ const EN_US_TRANSLATIONS: AppTranslations = {
     settings: 'Settings',
   },
   currency: {
-    symbol: '$',
+    symbol: '￥',
   },
   common: {
     add: 'Add',

@@ -256,7 +256,7 @@ export default function ExpensesPage() {
             </div>
 
             {isGroceryCategorySelected && (
-              <div className="col-span-4 space-y-3">
+              <div className="space-y-3 p-2">
                 <div className="flex items-center justify-between">
                   <h4 className="text-sm font-medium">{t("pageExpenses.groceryItems")}</h4>
                   {groceryItems.length > 0 && (
