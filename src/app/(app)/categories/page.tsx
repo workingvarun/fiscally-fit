@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect } from 'react';
@@ -14,18 +15,17 @@ import { useToast } from '@/hooks/use-toast';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
 import * as LucideIcons from 'lucide-react';
+import { t } from '@/lib/i18n';
 
 const iconMap: { [key: string]: LucideIcon } = {
   ShoppingCart, Car, Zap, Home, Film, HeartPulse, BookOpen, Sparkles, AlertTriangle, Tags,
-  ...LucideIcons, // Add all lucide icons
+  ...LucideIcons, 
 };
-
 
 const CategoryIcon = ({ name, ...props }: { name: string } & React.ComponentProps<LucideIcon>) => {
-  const IconComponent = iconMap[name] || Sparkles; // Default to Sparkles if not found
+  const IconComponent = iconMap[name] || Sparkles;
   return <IconComponent {...props} />;
 };
-
 
 export default function CategoriesPage() {
   const [categories, setCategories] = useState<Category[]>([]);
@@ -40,6 +40,7 @@ export default function CategoriesPage() {
     if (storedCategories) {
       setCategories(JSON.parse(storedCategories));
     } else {
+      // DEFAULT_CATEGORIES names are now pre-translated in constants.ts
       setCategories(DEFAULT_CATEGORIES);
       localStorage.setItem('fiscallyFitCategories', JSON.stringify(DEFAULT_CATEGORIES));
     }
@@ -52,7 +53,7 @@ export default function CategoriesPage() {
 
   const handleFormSubmit = () => {
     if (!categoryName.trim() || !selectedIcon) {
-      toast({ title: "Error", description: "Category name and icon are required.", variant: "destructive" });
+      toast({ title: t('toast.errorTitle'), description: t('pageCategories.categoryNameIconRequired'), variant: "destructive" });
       return;
     }
 
@@ -61,7 +62,7 @@ export default function CategoriesPage() {
         cat.id === editingCategory.id ? { ...cat, name: categoryName, icon: selectedIcon } : cat
       );
       saveCategories(updatedCategories);
-      toast({ title: "Success", description: "Category updated successfully." });
+      toast({ title: t('toast.successTitle'), description: t('pageCategories.categoryUpdatedSuccess') });
     } else {
       const newCategory: Category = {
         id: `cat_${Date.now()}`,
@@ -69,7 +70,7 @@ export default function CategoriesPage() {
         icon: selectedIcon,
       };
       saveCategories([...categories, newCategory]);
-      toast({ title: "Success", description: "Category added successfully." });
+      toast({ title: t('toast.successTitle'), description: t('pageCategories.categoryAddedSuccess') });
     }
     closeForm();
   };
@@ -82,10 +83,9 @@ export default function CategoriesPage() {
   };
 
   const handleDeleteCategory = (categoryId: string) => {
-    // Check if category is used in expenses or budgets before deleting (not implemented here for brevity)
     const updatedCategories = categories.filter(cat => cat.id !== categoryId);
     saveCategories(updatedCategories);
-    toast({ title: "Success", description: "Category deleted successfully." });
+    toast({ title: t('toast.successTitle'), description: t('pageCategories.categoryDeletedSuccess') });
   };
   
   const closeForm = () => {
@@ -97,9 +97,9 @@ export default function CategoriesPage() {
 
   return (
     <>
-      <PageHeader title="Spending Categories" description="Manage your expense categories.">
+      <PageHeader title={t("pageCategories.title")} description={t("pageCategories.description")}>
         <Button onClick={() => setIsFormOpen(true)}>
-          <PlusCircle className="mr-2 h-4 w-4" /> Add Category
+          <PlusCircle className="mr-2 h-4 w-4" /> {t("pageCategories.addCategory")}
         </Button>
       </PageHeader>
 
@@ -108,10 +108,10 @@ export default function CategoriesPage() {
             <CardContent className="pt-6">
               <div className="flex flex-col items-center justify-center h-40 text-center">
                 <Tags className="h-12 w-12 text-muted-foreground mb-4" />
-                <h3 className="text-xl font-semibold mb-1">No Categories Yet</h3>
-                <p className="text-muted-foreground mb-4">Start by adding your first spending category.</p>
+                <h3 className="text-xl font-semibold mb-1">{t("pageCategories.noCategoriesYet")}</h3>
+                <p className="text-muted-foreground mb-4">{t("pageCategories.startAddingFirstCategory")}</p>
                 <Button onClick={() => setIsFormOpen(true)}>
-                  <PlusCircle className="mr-2 h-4 w-4" /> Add Category
+                  <PlusCircle className="mr-2 h-4 w-4" /> {t("pageCategories.addCategory")}
                 </Button>
               </div>
             </CardContent>
@@ -126,16 +126,16 @@ export default function CategoriesPage() {
                   {category.name}
                 </CardTitle>
                 <div className="flex space-x-1">
-                   <Button variant="ghost" size="icon" onClick={() => openEditForm(category)} aria-label="Edit category">
+                   <Button variant="ghost" size="icon" onClick={() => openEditForm(category)} aria-label={t('common.edit')}>
                     <Edit3 className="h-4 w-4" />
                   </Button>
-                  <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive/80" onClick={() => handleDeleteCategory(category.id)} aria-label="Delete category">
+                  <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive/80" onClick={() => handleDeleteCategory(category.id)} aria-label={t('common.delete')}>
                     <Trash2 className="h-4 w-4" />
                   </Button>
                 </div>
               </CardHeader>
               <CardContent>
-                <p className="text-sm text-muted-foreground">Track expenses for {category.name.toLowerCase()}.</p>
+                <p className="text-sm text-muted-foreground">{t('pageCategories.trackExpensesFor', category.name)}</p>
               </CardContent>
             </Card>
           ))}
@@ -145,26 +145,26 @@ export default function CategoriesPage() {
       <Dialog open={isFormOpen} onOpenChange={ (isOpen) => { if (!isOpen) closeForm(); else setIsFormOpen(true); } }>
         <DialogContent className="sm:max-w-[480px]">
           <DialogHeader>
-            <DialogTitle>{editingCategory ? 'Edit' : 'Add New'} Category</DialogTitle>
+            <DialogTitle>{editingCategory ? t('pageCategories.editCategoryDialogTitle') : t('pageCategories.addCategoryDialogTitle')}</DialogTitle>
             <DialogDescription>
-              {editingCategory ? 'Update the details for this category.' : 'Create a new category to track your spending.'}
+              {editingCategory ? t('pageCategories.updateCategoryDetails') : t('pageCategories.createNewCategoryToTrackSpending')}
             </DialogDescription>
           </DialogHeader>
           <div className="grid gap-4 py-4">
             <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="categoryName" className="text-right">Name</Label>
+              <Label htmlFor="categoryName" className="text-right">{t("pageCategories.categoryName")}</Label>
               <Input 
                 id="categoryName" 
                 value={categoryName} 
                 onChange={(e) => setCategoryName(e.target.value)} 
                 className="col-span-3"
-                placeholder="e.g., Groceries, Rent"
+                placeholder={t('pageCategories.categoryName')} // e.g., Groceries, Rent
               />
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="categoryIcon" className="text-right pt-2 self-start">Icon</Label>
+              <Label htmlFor="categoryIcon" className="text-right pt-2 self-start">{t("pageCategories.icon")}</Label>
               <div className="col-span-3">
-                <p className="text-sm text-muted-foreground mb-2">Select an icon for your category.</p>
+                <p className="text-sm text-muted-foreground mb-2">{t("pageCategories.selectIconForCategory")}</p>
                 <ScrollArea className="h-48 rounded-md border p-2">
                   <div className="grid grid-cols-5 gap-2">
                     {AVAILABLE_CATEGORY_ICONS.map(iconName => (
@@ -174,7 +174,7 @@ export default function CategoriesPage() {
                         size="icon"
                         className={`p-2 h-10 w-10 ${selectedIcon === iconName ? 'ring-2 ring-primary border-primary' : ''}`}
                         onClick={() => setSelectedIcon(iconName)}
-                        aria-label={`Select icon ${iconName}`}
+                        aria-label={`${t('common.selectPlaceholder', t('pageCategories.icon'))} ${iconName}`}
                       >
                         <CategoryIcon name={iconName} className="h-5 w-5" />
                       </Button>
@@ -183,7 +183,7 @@ export default function CategoriesPage() {
                 </ScrollArea>
                 {selectedIcon && (
                   <div className="mt-2 flex items-center gap-2">
-                    <span className="text-sm text-muted-foreground">Selected:</span>
+                    <span className="text-sm text-muted-foreground">{t("common.selected")}:</span>
                     <CategoryIcon name={selectedIcon} className="h-5 w-5 text-primary" />
                     <Badge variant="secondary">{selectedIcon}</Badge>
                   </div>
@@ -192,8 +192,8 @@ export default function CategoriesPage() {
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={closeForm}>Cancel</Button>
-            <Button onClick={handleFormSubmit}>{editingCategory ? 'Save Changes' : 'Add Category'}</Button>
+            <Button variant="outline" onClick={closeForm}>{t("common.cancel")}</Button>
+            <Button onClick={handleFormSubmit}>{editingCategory ? t('common.saveChanges') : t('common.add')}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

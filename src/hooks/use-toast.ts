@@ -1,3 +1,4 @@
+
 "use client"
 
 // Inspired by react-hot-toast library
@@ -7,6 +8,7 @@ import type {
   ToastActionElement,
   ToastProps,
 } from "@/components/ui/toast"
+import { t } from "@/lib/i18n"; // Import t for potential default titles
 
 const TOAST_LIMIT = 1
 const TOAST_REMOVE_DELAY = 1000000
@@ -93,8 +95,6 @@ export const reducer = (state: State, action: Action): State => {
     case "DISMISS_TOAST": {
       const { toastId } = action
 
-      // ! Side effects ! - This could be extracted into a dismissToast() action,
-      // but I'll keep it here for simplicity
       if (toastId) {
         addToRemoveQueue(toastId)
       } else {
@@ -145,10 +145,22 @@ type Toast = Omit<ToasterToast, "id">
 function toast({ ...props }: Toast) {
   const id = genId()
 
-  const update = (props: ToasterToast) =>
+  // Set default titles based on variant if not provided
+  let title = props.title;
+  if (!title) {
+    if (props.variant === 'destructive') {
+      title = t('toast.errorTitle');
+    } else if (props.variant === 'default' || !props.variant) { // Assuming 'default' is success-like
+      // title = t('toast.successTitle'); // Or a more generic 'Info' if 'default' isn't always success
+    }
+    // No explicit 'success' variant in shadcn Toast, usually handled by 'default'
+  }
+
+
+  const update = (updatedProps: ToasterToast) =>
     dispatch({
       type: "UPDATE_TOAST",
-      toast: { ...props, id },
+      toast: { ...updatedProps, id },
     })
   const dismiss = () => dispatch({ type: "DISMISS_TOAST", toastId: id })
 
@@ -157,6 +169,7 @@ function toast({ ...props }: Toast) {
     toast: {
       ...props,
       id,
+      title, // Use potentially defaulted title
       open: true,
       onOpenChange: (open) => {
         if (!open) dismiss()

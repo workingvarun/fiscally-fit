@@ -18,6 +18,7 @@ import { useToast } from '@/hooks/use-toast';
 import { format, parseISO } from 'date-fns';
 import { DEFAULT_CATEGORIES } from '@/lib/constants';
 import * as LucideIcons from 'lucide-react';
+import { t, formatCurrency } from '@/lib/i18n';
 
 const iconMap: { [key: string]: LucideIcons.LucideIcon } = { ...LucideIcons };
 const CategoryIcon = ({ name, ...props }: { name: string } & React.ComponentProps<LucideIcons.LucideIcon>) => {
@@ -25,14 +26,12 @@ const CategoryIcon = ({ name, ...props }: { name: string } & React.ComponentProp
   return <IconComponent {...props} />;
 };
 
-
 export default function ExpensesPage() {
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingExpense, setEditingExpense] = useState<Expense | null>(null);
-  
-  // Form state
+
   const [amount, setAmount] = useState<string>('');
   const [selectedCategoryId, setSelectedCategoryId] = useState<string>('');
   const [date, setDate] = useState<Date | undefined>(new Date());
@@ -51,7 +50,7 @@ export default function ExpensesPage() {
     if (storedCategories) {
       setCategories(JSON.parse(storedCategories));
     } else {
-      setCategories(DEFAULT_CATEGORIES); // Fallback to default if none stored
+      setCategories(DEFAULT_CATEGORIES); // Names are pre-translated
     }
   }, []);
 
@@ -62,7 +61,7 @@ export default function ExpensesPage() {
 
   const handleAddGroceryItem = () => {
     if (!itemName.trim() || !itemPrice.trim() || parseFloat(itemPrice) <= 0) {
-      toast({ title: "Error", description: "Item name and valid price are required.", variant: "destructive" });
+      toast({ title: t('toast.errorTitle'), description: t('pageExpenses.itemNamePriceRequired'), variant: "destructive" });
       return;
     }
     setGroceryItems([...groceryItems, { id: `item_${Date.now()}`, name: itemName, price: parseFloat(itemPrice) }]);
@@ -76,7 +75,7 @@ export default function ExpensesPage() {
 
   const handleFormSubmit = () => {
     if (!amount.trim() || parseFloat(amount) <= 0 || !selectedCategoryId || !date) {
-      toast({ title: "Error", description: "Amount, category, and date are required.", variant: "destructive" });
+      toast({ title: t('toast.errorTitle'), description: t('pageExpenses.amountCategoryDateRequired'), variant: "destructive" });
       return;
     }
 
@@ -87,11 +86,9 @@ export default function ExpensesPage() {
       notes: notes.trim() || undefined,
     };
 
-    const selectedCategory = categories.find(c => c.id === selectedCategoryId);
-    if (selectedCategory?.name.toLowerCase() === 'grocery' && groceryItems.length > 0) {
+    const selectedCategoryObj = categories.find(c => c.id === selectedCategoryId);
+    if (selectedCategoryObj?.name.toLowerCase() === t('defaultCategories.grocery').toLowerCase() && groceryItems.length > 0) {
       expenseData.items = groceryItems;
-      // Optionally adjust main amount to sum of items if desired, or keep it separate
-      // expenseData.amount = groceryItems.reduce((sum, item) => sum + item.price, 0);
     }
 
     if (editingExpense) {
@@ -99,14 +96,14 @@ export default function ExpensesPage() {
         exp.id === editingExpense.id ? { ...exp, ...expenseData } as Expense : exp
       );
       saveExpenses(updatedExpenses);
-      toast({ title: "Success", description: "Expense updated successfully." });
+      toast({ title: t('toast.successTitle'), description: t('pageExpenses.expenseUpdatedSuccess') });
     } else {
       const newExpense: Expense = {
         id: `exp_${Date.now()}`,
         ...expenseData
       } as Expense;
       saveExpenses([...expenses, newExpense]);
-      toast({ title: "Success", description: "Expense added successfully." });
+      toast({ title: t('toast.successTitle'), description: t('pageExpenses.expenseAddedSuccess') });
     }
     closeForm();
   };
@@ -123,9 +120,9 @@ export default function ExpensesPage() {
 
   const handleDeleteExpense = (expenseId: string) => {
     saveExpenses(expenses.filter(exp => exp.id !== expenseId));
-    toast({ title: "Success", description: "Expense deleted successfully." });
+    toast({ title: t('toast.successTitle'), description: t('pageExpenses.expenseDeletedSuccess') });
   };
-  
+
   const closeForm = () => {
     setIsFormOpen(false);
     setEditingExpense(null);
@@ -141,13 +138,13 @@ export default function ExpensesPage() {
   const getCategoryName = (categoryId: string) => categories.find(c => c.id === categoryId)?.name || 'N/A';
   const getCategoryIcon = (categoryId: string) => categories.find(c => c.id === categoryId)?.icon || 'Sparkles';
 
-  const isGroceryCategorySelected = categories.find(c => c.id === selectedCategoryId)?.name.toLowerCase() === 'grocery';
+  const isGroceryCategorySelected = categories.find(c => c.id === selectedCategoryId)?.name.toLowerCase() === t('defaultCategories.grocery').toLowerCase();
 
   return (
     <>
-      <PageHeader title="Expenses" description="Track and manage your spending.">
+      <PageHeader title={t("pageExpenses.title")} description={t("pageExpenses.description")}>
         <Button onClick={() => setIsFormOpen(true)}>
-          <PlusCircle className="mr-2 h-4 w-4" /> Add Expense
+          <PlusCircle className="mr-2 h-4 w-4" /> {t("pageExpenses.addExpense")}
         </Button>
       </PageHeader>
 
@@ -156,23 +153,23 @@ export default function ExpensesPage() {
           <CardContent className="pt-6">
             <div className="flex flex-col items-center justify-center h-40 text-center">
               <ListChecks className="h-12 w-12 text-muted-foreground mb-4" />
-              <h3 className="text-xl font-semibold mb-1">No Expenses Yet</h3>
-              <p className="text-muted-foreground mb-4">Start by adding your first expense entry.</p>
+              <h3 className="text-xl font-semibold mb-1">{t("pageExpenses.noExpensesYet")}</h3>
+              <p className="text-muted-foreground mb-4">{t("pageExpenses.startAddingFirstExpense")}</p>
               <Button onClick={() => setIsFormOpen(true)}>
-                <PlusCircle className="mr-2 h-4 w-4" /> Add Expense
+                <PlusCircle className="mr-2 h-4 w-4" /> {t("pageExpenses.addExpense")}
               </Button>
             </div>
           </CardContent>
         </Card>
       ) : (
         <div className="space-y-4">
-          {expenses.sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime()).map((expense) => (
+          {expenses.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()).map((expense) => (
             <Card key={expense.id} className="shadow-md hover:shadow-lg transition-shadow duration-200">
               <CardHeader className="pb-3">
                 <div className="flex items-start justify-between">
                   <div>
                     <CardTitle className="text-xl font-semibold flex items-center">
-                       <CategoryIcon name={getCategoryIcon(expense.categoryId)} className="mr-3 h-6 w-6 text-primary" />
+                      <CategoryIcon name={getCategoryIcon(expense.categoryId)} className="mr-3 h-6 w-6 text-primary" />
                       {getCategoryName(expense.categoryId)}
                     </CardTitle>
                     <CardDescription className="text-sm text-muted-foreground">
@@ -180,28 +177,28 @@ export default function ExpensesPage() {
                     </CardDescription>
                   </div>
                   <div className="text-right">
-                     <p className="text-xl font-bold text-foreground">${expense.amount.toFixed(2)}</p>
-                     <div className="flex space-x-1 mt-1">
-                        <Button variant="ghost" size="icon" onClick={() => openEditForm(expense)} aria-label="Edit expense">
-                          <Edit3 className="h-4 w-4" />
-                        </Button>
-                        <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive/80" onClick={() => handleDeleteExpense(expense.id)} aria-label="Delete expense">
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
+                    <p className="text-xl font-bold text-foreground">{formatCurrency(expense.amount)}</p>
+                    <div className="flex space-x-1 mt-1">
+                      <Button variant="ghost" size="icon" onClick={() => openEditForm(expense)} aria-label={t('common.edit')}>
+                        <Edit3 className="h-4 w-4" />
+                      </Button>
+                      <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive/80" onClick={() => handleDeleteExpense(expense.id)} aria-label={t('common.delete')}>
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
                   </div>
                 </div>
               </CardHeader>
               <CardContent>
-                {expense.notes && <p className="text-sm text-foreground/80 mb-2 whitespace-pre-wrap"><FileText className="inline h-4 w-4 mr-1 text-muted-foreground"/>{expense.notes}</p>}
+                {expense.notes && <p className="text-sm text-foreground/80 mb-2 whitespace-pre-wrap"><FileText className="inline h-4 w-4 mr-1 text-muted-foreground" />{expense.notes}</p>}
                 {expense.items && expense.items.length > 0 && (
                   <div className="mt-2">
-                    <h4 className="text-xs font-medium text-muted-foreground mb-1 uppercase">Items:</h4>
+                    <h4 className="text-xs font-medium text-muted-foreground mb-1 uppercase">{t("pageExpenses.groceryItems")}:</h4>
                     <ul className="list-disc list-inside pl-1 space-y-0.5 text-sm">
                       {expense.items.map(item => (
                         <li key={item.id} className="flex justify-between">
                           <span>{item.name}</span>
-                          <span>${item.price.toFixed(2)}</span>
+                          <span>{formatCurrency(item.price)}</span>
                         </li>
                       ))}
                     </ul>
@@ -213,24 +210,24 @@ export default function ExpensesPage() {
         </div>
       )}
 
-      <Dialog open={isFormOpen} onOpenChange={(isOpen) => { if(!isOpen) closeForm(); else setIsFormOpen(true); }}>
+      <Dialog open={isFormOpen} onOpenChange={(isOpen) => { if (!isOpen) closeForm(); else setIsFormOpen(true); }}>
         <DialogContent className="sm:max-w-lg">
           <DialogHeader>
-            <DialogTitle>{editingExpense ? 'Edit' : 'Add New'} Expense</DialogTitle>
+            <DialogTitle>{editingExpense ? t('pageExpenses.editExpenseDialogTitle') : t('pageExpenses.addExpenseDialogTitle')}</DialogTitle>
             <DialogDescription>
-              {editingExpense ? 'Update the details for this expense.' : 'Record a new expense transaction.'}
+              {editingExpense ? t('pageExpenses.updateExpenseDetails') : t('pageExpenses.recordNewExpenseTransaction')}
             </DialogDescription>
           </DialogHeader>
           <div className="grid gap-4 py-4 max-h-[70vh] overflow-y-auto pr-2">
             <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="amount" className="text-right">Amount</Label>
+              <Label htmlFor="amount" className="text-right">{t("common.amount")}</Label>
               <Input id="amount" type="number" value={amount} onChange={(e) => setAmount(e.target.value)} className="col-span-3" placeholder="0.00" />
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="category" className="text-right">Category</Label>
+              <Label htmlFor="category" className="text-right">{t("common.category")}</Label>
               <Select value={selectedCategoryId} onValueChange={setSelectedCategoryId}>
                 <SelectTrigger className="col-span-3">
-                  <SelectValue placeholder="Select a category" />
+                  <SelectValue placeholder={t('common.selectPlaceholder', t('common.category'))} />
                 </SelectTrigger>
                 <SelectContent>
                   {categories.map(cat => (
@@ -240,12 +237,12 @@ export default function ExpensesPage() {
               </Select>
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="date" className="text-right">Date</Label>
+              <Label htmlFor="date" className="text-right">{t("common.date")}</Label>
               <Popover>
                 <PopoverTrigger asChild>
                   <Button variant={"outline"} className="col-span-3 justify-start text-left font-normal">
                     <CalendarIcon className="mr-2 h-4 w-4" />
-                    {date ? format(date, "PPP") : <span>Pick a date</span>}
+                    {date ? format(date, "PPP") : <span>{t('common.selectPlaceholder', t('common.date'))}</span>}
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent className="w-auto p-0">
@@ -254,51 +251,86 @@ export default function ExpensesPage() {
               </Popover>
             </div>
             <div className="grid grid-cols-4 items-start gap-4">
-              <Label htmlFor="notes" className="text-right pt-2">Notes</Label>
-              <Textarea id="notes" value={notes} onChange={(e) => setNotes(e.target.value)} className="col-span-3" placeholder="Optional notes (e.g., birthday gift, specific bill)" />
+              <Label htmlFor="notes" className="text-right pt-2">{t("common.notes")}</Label>
+              <Textarea id="notes" value={notes} onChange={(e) => setNotes(e.target.value)} className="col-span-3" placeholder={`${t('common.notes')} (${t('common.optional')})`} />
             </div>
 
             {isGroceryCategorySelected && (
-              <div className="col-span-4 mt-2 p-3 border rounded-md">
-                <h4 className="text-sm font-medium mb-2">Grocery Items</h4>
-                <div className="space-y-2 mb-3">
-                  {groceryItems.map(item => (
-                    <div key={item.id} className="flex items-center justify-between p-2 bg-muted/50 rounded-md">
-                      <span className="text-sm">{item.name} - ${item.price.toFixed(2)}</span>
-                      <Button variant="ghost" size="icon" className="h-6 w-6 text-destructive" onClick={() => handleRemoveGroceryItem(item.id)}>
-                        <X className="h-3 w-3" />
-                      </Button>
-                    </div>
-                  ))}
+              <div className="col-span-4 space-y-3">
+                <div className="flex items-center justify-between">
+                  <h4 className="text-sm font-medium">{t("pageExpenses.groceryItems")}</h4>
+                  {groceryItems.length > 0 && (
+                    <span className="text-sm text-muted-foreground">
+                      {t("pageExpenses.totalAmount", formatCurrency(groceryItems.reduce((sum, item) => sum + item.price, 0)))}
+                    </span>
+                  )}
                 </div>
-                <div className="flex flex-wrap gap-x-2 gap-y-3 items-end">
-                  <div className="flex-1 min-w-[150px] sm:min-w-[200px]">
-                    <Label htmlFor="itemName" className="text-xs block mb-1">Item Name</Label>
-                    <Input id="itemName" value={itemName} onChange={(e) => setItemName(e.target.value)} placeholder="e.g., Milk" />
-                  </div>
-                  <div className="w-28">
-                     <Label htmlFor="itemPrice" className="text-xs block mb-1">Price</Label>
-                    <Input id="itemPrice" type="number" value={itemPrice} onChange={(e) => setItemPrice(e.target.value)} placeholder="0.00" />
-                  </div>
-                  <Button type="button" variant="outline" size="sm" onClick={handleAddGroceryItem} className="shrink-0 self-end">Add Item</Button>
-                </div>
+
                 {groceryItems.length > 0 && (
-                  <p className="text-sm font-medium mt-3">
-                    Total Items: {groceryItems.length}, Total Price: ${groceryItems.reduce((sum, item) => sum + item.price, 0).toFixed(2)}
-                  </p>
+                  <div className="space-y-2 max-h-40 overflow-y-auto pr-2 border rounded-md p-2">
+                    {groceryItems.map(item => (
+                      <div key={item.id} className="flex items-center justify-between p-2 hover:bg-muted/50 rounded-md">
+                        <span className="text-sm">{item.name}</span>
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm font-medium">{formatCurrency(item.price)}</span>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-6 w-6 text-destructive hover:bg-destructive/10"
+                            onClick={() => handleRemoveGroceryItem(item.id)}
+                             aria-label={t('common.delete')}
+                          >
+                            <X className="h-3 w-3" />
+                          </Button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
                 )}
+
+                <div className="grid grid-cols-12 gap-2 items-end">
+                  <div className="col-span-6">
+                    <Label htmlFor="itemName" className="text-xs">{t("common.itemName")}</Label>
+                    <Input
+                      id="itemName"
+                      value={itemName}
+                      onChange={(e) => setItemName(e.target.value)}
+                      placeholder={t("common.itemName")}
+                      className="mt-1"
+                    />
+                  </div>
+                  <div className="col-span-4">
+                    <Label htmlFor="itemPrice" className="text-xs">{t("common.price")}</Label>
+                    <Input
+                      id="itemPrice"
+                      type="number"
+                      value={itemPrice}
+                      onChange={(e) => setItemPrice(e.target.value)}
+                      placeholder="0.00"
+                      className="mt-1"
+                    />
+                  </div>
+                  <div className="col-span-2">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={handleAddGroceryItem}
+                      className="w-full"
+                    >
+                      {t("pageExpenses.addItem")}
+                    </Button>
+                  </div>
+                </div>
               </div>
             )}
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={closeForm}>Cancel</Button>
-            <Button onClick={handleFormSubmit}>{editingExpense ? 'Save Changes' : 'Add Expense'}</Button>
+            <Button variant="outline" onClick={closeForm}>{t("common.cancel")}</Button>
+            <Button onClick={handleFormSubmit}>{editingExpense ? t('common.saveChanges') : t('common.add')}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
     </>
   );
 }
-
-
-    

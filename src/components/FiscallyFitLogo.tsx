@@ -1,6 +1,7 @@
-import { APP_LOGO_ICON, APP_NAME } from '@/lib/constants';
+import { APP_LOGO_ICON } from '@/lib/constants';
 import { cn } from '@/lib/utils';
 import type { LucideProps } from 'lucide-react';
+import { t } from '@/lib/i18n';
 
 interface FiscallyFitLogoProps extends React.HTMLAttributes<HTMLDivElement> {
   iconProps?: LucideProps;
@@ -15,7 +16,7 @@ export function FiscallyFitLogo({ className, iconProps, hideText = false, ...pro
         className={cn("h-7 w-7 text-primary", iconProps?.className)} 
         strokeWidth={iconProps?.strokeWidth || 2}
       />
-      {!hideText && <span className="text-xl font-semibold text-foreground">{APP_NAME}</span>}
+      {!hideText && <span className="text-xl font-semibold text-foreground">{t('appName')}</span>}
     </div>
   );
 }

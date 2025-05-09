@@ -1,6 +1,7 @@
+
 "use client";
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import { PageHeader } from "@/components/PageHeader";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -12,14 +13,15 @@ import Image from "next/image";
 import { extractGroceryData, type ExtractGroceryDataInput, type ExtractGroceryDataOutput } from "@/ai/flows/extract-grocery-data";
 import type { Expense, Category, GroceryItem } from "@/lib/definitions";
 import { DEFAULT_CATEGORIES } from '@/lib/constants';
-import { useRouter } from 'next/navigation'; // For redirecting
+import { useRouter } from 'next/navigation';
+import { t, formatCurrency } from '@/lib/i18n';
 
 export default function AddReceiptPage() {
   const [receiptImage, setReceiptImage] = useState<File | null>(null);
   const [receiptPreview, setReceiptPreview] = useState<string | null>(null);
   const [extractedItems, setExtractedItems] = useState<GroceryItem[]>([]);
   const [isLoading, setIsLoading] = useState(false);
-  const [isEditing, setIsEditing] = useState<string | null>(null); // Stores ID of item being edited
+  const [isEditing, setIsEditing] = useState<string | null>(null);
   const [editName, setEditName] = useState("");
   const [editPrice, setEditPrice] = useState("");
   const [categories, setCategories] = useState<Category[]>([]);
@@ -31,7 +33,7 @@ export default function AddReceiptPage() {
     if (storedCategories) {
       setCategories(JSON.parse(storedCategories));
     } else {
-      setCategories(DEFAULT_CATEGORIES);
+      setCategories(DEFAULT_CATEGORIES); // These names are already translated in constants.ts
     }
   }, []);
 
@@ -44,13 +46,13 @@ export default function AddReceiptPage() {
         setReceiptPreview(reader.result as string);
       };
       reader.readAsDataURL(file);
-      setExtractedItems([]); // Clear previous results
+      setExtractedItems([]);
     }
   };
 
   const handleExtractData = async () => {
     if (!receiptImage || !receiptPreview) {
-      toast({ title: "Error", description: "Please select a receipt image.", variant: "destructive" });
+      toast({ title: t('toast.errorTitle'), description: t('pageAddReceipt.pleaseSelectReceiptImage'), variant: "destructive" });
       return;
     }
     setIsLoading(true);
@@ -62,13 +64,19 @@ export default function AddReceiptPage() {
       
       if (result && result.items) {
         setExtractedItems(result.items.map((item, index) => ({ ...item, id: `ocr_item_${index}_${Date.now()}` })));
-        toast({ title: "Success", description: "Data extracted. Please review and edit if necessary.", variant: "default" });
+        toast({ title: t('toast.successTitle'), description: t('pageAddReceipt.dataExtractedReview'), variant: "default" });
       } else {
-        throw new Error("No items found in OCR result.");
+        throw new Error(t('pageAddReceipt.noItemsToSave'));
       }
     } catch (error) {
       console.error("OCR Error:", error);
-      toast({ title: "OCR Failed", description: `Could not extract data: ${error instanceof Error ? error.message : 'Unknown error'}. Please try again or enter manually.`, variant: "destructive", duration: 7000 });
+      const errorMessage = error instanceof Error ? error.message : t('pageAddReceipt.ocrErrorUnknown');
+      toast({ 
+        title: t('toast.errorTitle'), 
+        description: t('pageAddReceipt.ocrFailed', errorMessage), 
+        variant: "destructive", 
+        duration: 7000 
+      });
     } finally {
       setIsLoading(false);
     }
@@ -82,7 +90,7 @@ export default function AddReceiptPage() {
 
   const handleSaveEdit = (itemId: string) => {
     if (!editName.trim() || !editPrice.trim() || parseFloat(editPrice) < 0) {
-      toast({ title: "Error", description: "Item name and valid price are required.", variant: "destructive" });
+      toast({ title: t('toast.errorTitle'), description: t('pageExpenses.itemNamePriceRequired'), variant: "destructive" });
       return;
     }
     setExtractedItems(prevItems =>
@@ -99,13 +107,15 @@ export default function AddReceiptPage() {
 
   const handleSaveExpense = () => {
     if (extractedItems.length === 0) {
-      toast({ title: "No items", description: "No items to save as an expense.", variant: "destructive" });
+      toast({ title: t('common.noItems'), description: t('pageAddReceipt.noItemsToSave'), variant: "destructive" });
       return;
     }
 
-    const groceryCategory = categories.find(cat => cat.name.toLowerCase() === "grocery");
+    const groceryCategoryName = t('defaultCategories.grocery').toLowerCase();
+    const groceryCategory = categories.find(cat => cat.name.toLowerCase() === groceryCategoryName);
+    
     if (!groceryCategory) {
-      toast({ title: "Error", description: "Grocery category not found. Please create one.", variant: "destructive" });
+      toast({ title: t('toast.errorTitle'), description: t('pageAddReceipt.groceryCategoryNotFound'), variant: "destructive" });
       return;
     }
 
@@ -116,19 +126,17 @@ export default function AddReceiptPage() {
       categoryId: groceryCategory.id,
       amount: totalAmount,
       date: new Date().toISOString(),
-      notes: `Grocery receipt processed via OCR on ${new Date().toLocaleDateString()}`,
+      notes: `${t('defaultCategories.grocery')} ${t('pageAddReceipt.title')} ${t('common.processing').toLowerCase()} on ${new Date().toLocaleDateString()}`, // Example note
       items: extractedItems,
     };
 
     const existingExpenses: Expense[] = JSON.parse(localStorage.getItem('fiscallyFitExpenses') || '[]');
     localStorage.setItem('fiscallyFitExpenses', JSON.stringify([...existingExpenses, newExpense]));
     
-    toast({ title: "Expense Saved", description: "Grocery expense saved successfully!", variant: "default" });
-    // Reset state
+    toast({ title: t('toast.successTitle'), description: t('pageAddReceipt.expenseSavedSuccess'), variant: "default" });
     setReceiptImage(null);
     setReceiptPreview(null);
     setExtractedItems([]);
-    // Redirect to expenses page
     router.push('/expenses');
   };
 
@@ -136,19 +144,19 @@ export default function AddReceiptPage() {
   return (
     <>
       <PageHeader
-        title="Add Grocery Receipt"
-        description="Upload a receipt image to automatically extract items and prices using OCR."
+        title={t('pageAddReceipt.title')}
+        description={t('pageAddReceipt.description')}
       />
 
       <div className="grid gap-8 md:grid-cols-2">
         <Card className="shadow-lg">
           <CardHeader>
-            <CardTitle>1. Upload Receipt</CardTitle>
+            <CardTitle>{t('pageAddReceipt.uploadReceipt')}</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <div>
               <Label htmlFor="receipt-upload" className="block text-sm font-medium text-muted-foreground mb-1">
-                Select Receipt Image
+                {t('pageAddReceipt.selectReceiptImage')}
               </Label>
               <div className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-dashed rounded-md">
                 <div className="space-y-1 text-center">
@@ -162,50 +170,50 @@ export default function AddReceiptPage() {
                       htmlFor="receipt-upload"
                       className="relative cursor-pointer rounded-md font-medium text-primary hover:text-primary/80 focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-ring"
                     >
-                      <span>Upload a file</span>
+                      <span>{t('pageAddReceipt.uploadAFile')}</span>
                       <Input id="receipt-upload" name="receipt-upload" type="file" className="sr-only" onChange={handleFileChange} accept="image/*" />
                     </Label>
-                    <p className="pl-1">or drag and drop</p>
+                    <p className="pl-1">{t('pageAddReceipt.orDragAndDrop')}</p>
                   </div>
-                  <p className="text-xs text-muted-foreground">PNG, JPG, GIF up to 10MB</p>
+                  <p className="text-xs text-muted-foreground">{t('pageAddReceipt.fileFormatHint')}</p>
                 </div>
               </div>
             </div>
             {receiptImage && (
               <div className="text-sm text-muted-foreground">
-                Selected: {receiptImage.name} ({(receiptImage.size / 1024).toFixed(1)} KB)
+                {t('pageAddReceipt.selectedFile', receiptImage.name, (receiptImage.size / 1024).toFixed(1))}
               </div>
             )}
             <Button onClick={handleExtractData} disabled={!receiptImage || isLoading} className="w-full">
               {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <CheckCircle className="mr-2 h-4 w-4" />}
-              {isLoading ? "Processing..." : "Extract Data"}
+              {isLoading ? t('common.processing') : t('pageAddReceipt.extractData')}
             </Button>
           </CardContent>
         </Card>
 
         <Card className="shadow-lg">
           <CardHeader>
-            <CardTitle>2. Review & Edit Extracted Items</CardTitle>
+            <CardTitle>{t('pageAddReceipt.reviewEditExtractedItems')}</CardTitle>
             <CardDescription>
-              {extractedItems.length > 0 ? "Verify the extracted items and make corrections if needed." : "Extracted items will appear here."}
+              {extractedItems.length > 0 ? t('pageAddReceipt.verifyExtractedItems') : t('pageAddReceipt.extractedItemsWillAppearHere')}
             </CardDescription>
           </CardHeader>
           <CardContent>
             {isLoading && (
               <div className="flex items-center justify-center h-40">
                 <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                <p className="ml-2 text-muted-foreground">Extracting items...</p>
+                <p className="ml-2 text-muted-foreground">{t('pageAddReceipt.extractingItems')}</p>
               </div>
             )}
             {!isLoading && extractedItems.length === 0 && !receiptImage && (
                 <div className="text-center text-muted-foreground py-10">
-                    <p>Upload a receipt image and click "Extract Data" to see results.</p>
+                    <p>{t('pageAddReceipt.uploadReceiptToSeeResults')}</p>
                 </div>
             )}
              {!isLoading && extractedItems.length === 0 && receiptImage && (
                 <div className="text-center text-muted-foreground py-10">
-                    <p>No items extracted, or extraction not yet performed.</p>
-                     <p className="text-xs mt-1">If extraction failed, try a clearer image or different lighting.</p>
+                    <p>{t('pageAddReceipt.noItemsExtractedOrNotPerformed')}</p>
+                     <p className="text-xs mt-1">{t('pageAddReceipt.tryClearerImage')}</p>
                 </div>
             )}
             {extractedItems.length > 0 && (
@@ -217,32 +225,32 @@ export default function AddReceiptPage() {
                         <Input
                           value={editName}
                           onChange={(e) => setEditName(e.target.value)}
-                          placeholder="Item Name"
+                          placeholder={t('pageAddReceipt.itemName')}
                           className="h-8 text-sm"
                         />
                         <Input
                           type="number"
                           value={editPrice}
                           onChange={(e) => setEditPrice(e.target.value)}
-                          placeholder="Price"
+                          placeholder={t('pageAddReceipt.price')}
                           className="h-8 text-sm"
                         />
                         <div className="flex justify-end gap-2 mt-1">
-                           <Button size="sm" variant="outline" onClick={() => setIsEditing(null)}>Cancel</Button>
-                           <Button size="sm" onClick={() => handleSaveEdit(item.id)}><Save className="h-3 w-3 mr-1"/> Save</Button>
+                           <Button size="sm" variant="outline" onClick={() => setIsEditing(null)}>{t('common.cancel')}</Button>
+                           <Button size="sm" onClick={() => handleSaveEdit(item.id)}><Save className="h-3 w-3 mr-1"/> {t('common.save')}</Button>
                         </div>
                       </div>
                     ) : (
                       <div className="flex items-center justify-between">
                         <div>
-                          <p className="font-medium text-foreground">{item.name || "Unnamed Item"}</p>
-                          <p className="text-sm text-muted-foreground">${item.price?.toFixed(2) || "0.00"}</p>
+                          <p className="font-medium text-foreground">{item.name || t('pageAddReceipt.unnamedItem')}</p>
+                          <p className="text-sm text-muted-foreground">{formatCurrency(item.price || 0)}</p>
                         </div>
                         <div className="flex gap-1">
-                          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleEditItem(item)} aria-label="Edit item">
+                          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleEditItem(item)} aria-label={t('common.edit')}>
                             <Edit2 className="h-4 w-4" />
                           </Button>
-                          <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive hover:text-destructive/80" onClick={() => handleRemoveItem(item.id)} aria-label="Delete item">
+                          <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive hover:text-destructive/80" onClick={() => handleRemoveItem(item.id)} aria-label={t('common.delete')}>
                             <Trash2 className="h-4 w-4" />
                           </Button>
                         </div>
@@ -252,14 +260,14 @@ export default function AddReceiptPage() {
                 ))}
                  <div className="pt-4 border-t">
                     <p className="text-lg font-semibold text-right">
-                        Total: ${extractedItems.reduce((sum, item) => sum + item.price, 0).toFixed(2)}
+                        {t('common.total')}: {formatCurrency(extractedItems.reduce((sum, item) => sum + item.price, 0))}
                     </p>
                 </div>
               </div>
             )}
             {extractedItems.length > 0 && (
               <Button onClick={handleSaveExpense} className="w-full mt-6">
-                <Save className="mr-2 h-4 w-4" /> Save as Grocery Expense
+                <Save className="mr-2 h-4 w-4" /> {t('pageAddReceipt.saveAsGroceryExpense')}
               </Button>
             )}
           </CardContent>
@@ -269,14 +277,14 @@ export default function AddReceiptPage() {
       <Card className="mt-8 bg-accent/10 border-accent/30">
         <CardHeader className="flex flex-row items-center space-x-3 pb-2">
           <CheckCircle className="h-6 w-6 text-accent-foreground" />
-          <CardTitle className="text-accent-foreground">OCR Tips</CardTitle>
+          <CardTitle className="text-accent-foreground">{t('pageAddReceipt.ocrTips')}</CardTitle>
         </CardHeader>
         <CardContent>
           <ul className="list-disc pl-5 space-y-1 text-sm text-accent-foreground/80">
-            <li>Use clear, well-lit images of your receipts.</li>
-            <li>Ensure the receipt is flat and not crumpled.</li>
-            <li>Avoid shadows or glare on the receipt.</li>
-            <li>The OCR is optimized for standard grocery receipts. Complex layouts might have lower accuracy.</li>
+            <li>{t('pageAddReceipt.ocrTipClearImages')}</li>
+            <li>{t('pageAddReceipt.ocrTipFlatReceipt')}</li>
+            <li>{t('pageAddReceipt.ocrTipNoShadows')}</li>
+            <li>{t('pageAddReceipt.ocrTipStandardReceipts')}</li>
           </ul>
         </CardContent>
       </Card>

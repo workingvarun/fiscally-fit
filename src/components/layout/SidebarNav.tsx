@@ -1,3 +1,4 @@
+
 'use client';
 
 import Link from 'next/link';
@@ -16,13 +17,14 @@ import {
   SidebarFooter,
 } from "@/components/ui/sidebar";
 import { Separator } from '../ui/separator';
-
+import { t } from '@/lib/i18n';
 
 export function SidebarNav() {
   const pathname = usePathname();
 
   const renderNavItem = (item: NavItem) => {
     const isActive = pathname === item.href || (item.href !== '/dashboard' && pathname.startsWith(item.href));
+    const label = t(`nav.${item.labelKey}`);
     return (
       <SidebarMenuItem key={item.href}>
         <SidebarMenuButton
@@ -32,11 +34,11 @@ export function SidebarNav() {
             "w-full justify-start text-sm font-medium",
             isActive ? "bg-primary/10 text-primary hover:bg-primary/20" : "text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent"
           )}
-          tooltip={{content: item.label}}
+          tooltip={{content: label}}
         >
           <Link href={item.href} className="flex items-center">
             <item.icon className={cn("h-5 w-5 mr-3 shrink-0", isActive ? "text-primary" : "")} />
-            <span className="truncate">{item.label}</span>
+            <span className="truncate">{label}</span>
           </Link>
         </SidebarMenuButton>
       </SidebarMenuItem>

@@ -3,14 +3,15 @@ import { GeistSans } from 'geist/font/sans';
 import './globals.css';
 import { Toaster } from '@/components/ui/toaster';
 import { ThemeProvider } from '@/components/layout/ThemeProvider';
+import { t } from '@/lib/i18n';
 
 // The GeistSans object from 'geist/font/sans' is not a function.
 // It directly provides .variable and .className properties.
 // The options previously passed (variable name and subsets) are defaults for GeistSans.
 
 export const metadata: Metadata = {
-  title: 'Fiscally Fit',
-  description: 'Your personal budgeting and expense tracking companion.',
+  title: t('appName'),
+  description: t('appDescription'),
 };
 
 export default function RootLayout({
