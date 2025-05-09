@@ -1,3 +1,5 @@
+"use client";
+
 import Link from 'next/link';
 import { FiscallyFitLogo } from '@/components/FiscallyFitLogo';
 import { Button } from '@/components/ui/button';
@@ -9,6 +11,7 @@ import { useTheme } from 'next-themes';
 import {
   SidebarTrigger
 } from "@/components/ui/sidebar";
+import { cn } from '@/lib/utils';
 
 
 export function AppHeader() {
@@ -57,6 +60,3 @@ export function AppHeader() {
     </header>
   );
 }
-
-// Helper for cn, if not globally available or for specific styling needs
-const cn = (...classes: string[]) => classes.filter(Boolean).join(' ');

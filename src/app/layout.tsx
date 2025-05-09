@@ -1,13 +1,12 @@
 import type { Metadata } from 'next';
-import { GeistSans } from 'geist/font/sans'; // Corrected import for GeistSans
+import { GeistSans } from 'geist/font/sans';
 import './globals.css';
 import { Toaster } from '@/components/ui/toaster';
 import { ThemeProvider } from '@/components/layout/ThemeProvider';
 
-const geistSans = GeistSans({
-  variable: '--font-geist-sans',
-  subsets: ['latin'],
-});
+// The GeistSans object from 'geist/font/sans' is not a function.
+// It directly provides .variable and .className properties.
+// The options previously passed (variable name and subsets) are defaults for GeistSans.
 
 export const metadata: Metadata = {
   title: 'Fiscally Fit',
@@ -21,7 +20,8 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className={`${geistSans.variable} font-sans antialiased`}> {/* Added font-sans as a fallback */}
+      {/* Use GeistSans.variable directly */}
+      <body className={`${GeistSans.variable} font-sans antialiased`}>
         <ThemeProvider
           attribute="class"
           defaultTheme="system"
