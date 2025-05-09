@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect } from 'react';
@@ -270,19 +271,19 @@ export default function ExpensesPage() {
                     </div>
                   ))}
                 </div>
-                <div className="flex gap-2 items-end">
-                  <div className="flex-grow">
-                    <Label htmlFor="itemName" className="text-xs">Item Name</Label>
+                <div className="flex flex-wrap gap-x-2 gap-y-3 items-end">
+                  <div className="flex-1 min-w-[150px] sm:min-w-[200px]">
+                    <Label htmlFor="itemName" className="text-xs block mb-1">Item Name</Label>
                     <Input id="itemName" value={itemName} onChange={(e) => setItemName(e.target.value)} placeholder="e.g., Milk" />
                   </div>
-                  <div className="w-24">
-                     <Label htmlFor="itemPrice" className="text-xs">Price</Label>
+                  <div className="w-28">
+                     <Label htmlFor="itemPrice" className="text-xs block mb-1">Price</Label>
                     <Input id="itemPrice" type="number" value={itemPrice} onChange={(e) => setItemPrice(e.target.value)} placeholder="0.00" />
                   </div>
-                  <Button type="button" variant="outline" size="sm" onClick={handleAddGroceryItem} className="self-end mb-px">Add Item</Button>
+                  <Button type="button" variant="outline" size="sm" onClick={handleAddGroceryItem} className="shrink-0 self-end">Add Item</Button>
                 </div>
                 {groceryItems.length > 0 && (
-                  <p className="text-sm font-medium mt-2">
+                  <p className="text-sm font-medium mt-3">
                     Total Items: {groceryItems.length}, Total Price: ${groceryItems.reduce((sum, item) => sum + item.price, 0).toFixed(2)}
                   </p>
                 )}
@@ -298,3 +299,6 @@ export default function ExpensesPage() {
     </>
   );
 }
+
+
+    
